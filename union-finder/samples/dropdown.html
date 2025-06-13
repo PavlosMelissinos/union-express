@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Εύρεση Σωματείων - Mock-up</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 1.2rem;
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #f8f9ff;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .suggestion-type {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .clear-btn {
+            background: #f0f0f0;
+            color: #666;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .clear-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .union-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .permalink-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .permalink-badge:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .union-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            padding-right: 100px;
+        }
+
+        .type-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .parent-union {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .contact-info {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .contact-info h4 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .contact-item {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .contact-item strong {
+            min-width: 100px;
+            margin-right: 10px;
+        }
+
+        .contact-link {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .contact-link:hover {
+            opacity: 0.8;
+        }
+
+        .register-link {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .register-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .no-results {
+            text-align: center;
+            color: #666;
+            font-size: 1.1rem;
+            padding: 40px;
+        }
+
+        .url-display {
+            background: #f8f9ff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .search-section, .results-section {
+                padding: 25px;
+            }
+            
+            .union-card h3 {
+                padding-right: 0;
+                margin-bottom: 25px;
+            }
+            
+            .permalink-badge {
+                position: static;
+                display: inline-block;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Εύρεση Σωματείων</h1>
+            <p>Αναζητήστε το κατάλληλο σωματείο για τον κλάδο ή την εταιρεία σας</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="Αναζήτηση σωματείου... (π.χ. 'τράπεζα', 'Alpha Bank', 'εκπαίδευση')">
+                <span class="search-icon">🔍</span>
+                <div class="search-suggestions" id="searchSuggestions"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="sector">Ή επιλέξτε Κλάδο:</label>
+                <select id="sector">
+                    <option value="">-- Όλοι οι Κλάδοι --</option>
+                    <option value="banks">Τράπεζες</option>
+                    <option value="education">Εκπαίδευση</option>
+                    <option value="healthcare">Υγεία</option>
+                    <option value="construction">Οικοδομικά</option>
+                    <option value="transport">Μεταφορές</option>
+                    <option value="retail">Λιανικό Εμπόριο</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="company">Επιλέξτε Εταιρεία/Επιχείρηση:</label>
+                <select id="company">
+                    <option value="">-- Όλες οι Εταιρείες --</option>
+                </select>
+            </div>
+
+            <button class="clear-btn" onclick="clearFilters()">🗑️ Καθαρισμός Φίλτρων</button>
+        </div>
+
+        <div class="results-section" id="results">
+            <!-- Τα αποτελέσματα θα εμφανιστούν εδώ -->
+        </div>
+
+        <div class="url-display" id="urlDisplay" style="display: none;">
+            <strong>Permalink:</strong> <span id="currentUrl"></span>
+        </div>
+    </div>
+
+    <script>
+        // Mock δεδομένα σωματείων
+        const unionData = [
+            {
+                id: "poyt",
+                name: "Πανελλήνια Ομοσπονδία Υπαλλήλων Τραπεζών",
+                type: "Κλαδικό Σωματείο",
+                sector: "banks",
+                sectorName: "Τράπεζες",
+                company: null,
+                parentUnion: null,
+                website: "https://www.poyt.gr",
+                registrationForm: "https://www.poyt.gr/eggrafh",
+                phone: "210-3234567",
+                email: "info@poyt.gr",
+                permalink: "/somateio-poyt/"
+            },
+            {
+                id: "sue-ethniki",
+                name: "Σωματείο Υπαλλήλων Εθνικής Τράπεζας",
+                type: "Επιχειρησιακό Σωματείο",
+                sector: "banks",
+                sectorName: "Τράπεζες",
+                company: "Εθνική Τράπεζα",
+                parentUnion: "Πανελλήνια Ομοσπονδία Υπαλλήλων Τραπεζών",
+                website: "https://www.sue.gr",
+                registrationForm: "https://www.sue.gr/join",
+                phone: "210-3345678",
+                email: "contact@sue.gr",
+                permalink: "/somateio-ethniki-trapeza/"
+            },
+            {
+                id: "sua-alpha",
+                name: "Σωματείο Υπαλλήλων Alpha Bank",
+                type: "Επιχειρησιακό Σωματείο",
+                sector: "banks",
+                sectorName: "Τράπεζες",
+                company: "Alpha Bank",
+                parentUnion: "Πανελλήνια Ομοσπονδία Υπαλλήλων Τραπεζών",
+                website: null,
+                registrationForm: "https://forms.google.com/alpha-union",
+                phone: "210-3456789",
+                email: "info@sua.gr",
+                permalink: "/somateio-alpha-bank/"
+            },
+            {
+                id: "doe",
+                name: "Διδασκαλική Ομοσπονδία Ελλάδος",
+                type: "Κλαδικό Σωματείο",
+                sector: "education",
+                sectorName: "Εκπαίδευση",
+                company: null,
+                parentUnion: null,
+                website: "https://www.doe.gr",
+                registrationForm: "https://www.doe.gr/membership",
+                phone: "210-3812345",
+                email: "info@doe.gr",
+                permalink: "/somateio-doe/"
+            },
+            {
+                id: "poedn",
+                name: "Πανελλήνια Ομοσπονδία Εργαζομένων Δημοσίων Νοσοκομείων",
+                type: "Κλαδικό Σωματείο",
+                sector: "healthcare",
+                sectorName: "Υγεία",
+                company: null,
+                parentUnion: null,
+                website: "https://www.poedn.gr",
+                registrationForm: "https://www.poedn.gr/eggrafh-melous",
+                phone: "210-5123456",
+                email: "info@poedn.gr",
+                permalink: "/somateio-poedn/"
+            }
+        ];
+
+        // Οργάνωση δεδομένων
+        const sectorGroups = {};
+        const companyGroups = {};
+        
+        unionData.forEach(union => {
+            if (!sectorGroups[union.sector]) {
+                sectorGroups[union.sector] = [];
+            }
+            sectorGroups[union.sector].push(union);
+            
+            if (union.company) {
+                if (!companyGroups[union.sector]) {
+                    companyGroups[union.sector] = [];
+                }
+                if (!companyGroups[union.sector].includes(union.company)) {
+                    companyGroups[union.sector].push(union.company);
+                }
+            }
+        });
+
+        // Fuzzy search function
+        function fuzzySearch(query, text) {
+            query = query.toLowerCase();
+            text = text.toLowerCase();
+            
+            // Exact match
+            if (text.includes(query)) return 100;
+            
+            // Calculate similarity
+            let score = 0;
+            let queryIndex = 0;
+            
+            for (let i = 0; i < text.length && queryIndex < query.length; i++) {
+                if (text[i] === query[queryIndex]) {
+                    score++;
+                    queryIndex++;
+                }
+            }
+            
+            return (score / query.length) * 100;
+        }
+
+        // Search functionality
+        function performSearch(query) {
+            if (!query.trim()) {
+                document.getElementById('searchSuggestions').style.display = 'none';
+                showAllResults();
+                return;
+            }
+
+            const results = unionData.map(union => {
+                const nameScore = fuzzySearch(query, union.name);
+                const sectorScore = fuzzySearch(query, union.sectorName);
+                const companyScore = union.company ? fuzzySearch(query, union.company) : 0;
+                const maxScore = Math.max(nameScore, sectorScore, companyScore);
+                
+                return { union, score: maxScore };
+            }).filter(result => result.score > 30)
+              .sort((a, b) => b.score - a.score);
+
+            showSearchSuggestions(results.slice(0, 5));
+            showFilteredResults(results.map(r => r.union));
+        }
+
+        function showSearchSuggestions(results) {
+            const suggestionsDiv = document.getElementById('searchSuggestions');
+            
+            if (results.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            const html = results.map(result => `
+                <div class="suggestion-item" onclick="selectUnion('${result.union.id}')">
+                    <div class="suggestion-name">${result.union.name}</div>
+                    <div class="suggestion-type">${result.union.type}${result.union.company ? ' - ' + result.union.company : ''}</div>
+                </div>
+            `).join('');
+
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.style.display = 'block';
+        }
+
+        function selectUnion(unionId) {
+            const union = unionData.find(u => u.id === unionId);
+            if (union) {
+                showSpecificUnion(union);
+                updateUrl(union.permalink);
+                document.getElementById('searchSuggestions').style.display = 'none';
+                document.getElementById('searchInput').value = union.name;
+            }
+        }
+
+        function showSpecificUnion(union) {
+            const html = createUnionCard(union);
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showFilteredResults(unions) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (unions.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results">Δεν βρέθηκαν αποτελέσματα για την αναζήτησή σας.</div>';
+            } else {
+                const html = unions.map(union => createUnionCard(union)).join('');
+                resultsDiv.innerHTML = html;
+            }
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        function showAllResults() {
+            showFilteredResults(unionData);
+        }
+
+        function createUnionCard(union) {
+            return `
+                <div class="union-card">
+                    <div class="permalink-badge" onclick="copyPermalink('${union.permalink}')" title="Αντιγραφή permalink">
+                        🔗 Link
+                    </div>
+                    <h3>${union.name}</h3>
+                    <div class="type-badge">${union.type}</div>
+                    
+                    ${union.parentUnion ? `
+                        <div class="parent-union">
+                            <strong>Μητρικό Σωματείο:</strong> ${union.parentUnion}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="contact-info">
+                        <h4>📞 Στοιχεία Επικοινωνίας</h4>
+                        ${union.phone ? `<div class="contact-item"><strong>Τηλέφωνο:</strong> ${union.phone}</div>` : ''}
+                        ${union.email ? `<div class="contact-item"><strong>Email:</strong> <a href="mailto:${union.email}" class="contact-link">${union.email}</a></div>` : ''}
+                        ${union.website ? `<div class="contact-item"><strong>Ιστοσελίδα:</strong> <a href="${union.website}" target="_blank" class="contact-link">${union.website}</a></div>` : ''}
+                    </div>
+
+                    ${union.registrationForm ? `
+                        <a href="${union.registrationForm}" target="_blank" class="register-link">
+                            📝 Φόρμα Εγγραφής
+                        </a>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function updateUrl(permalink) {
+            const urlDisplay = document.getElementById('urlDisplay');
+            const currentUrl = document.getElementById('currentUrl');
+            
+            currentUrl.textContent = `${window.location.origin}${permalink}`;
+            urlDisplay.style.display = 'block';
+            
+            // Update browser URL without reload
+            window.history.pushState({}, '', permalink);
+        }
+
+        function copyPermalink(permalink) {
+            const url = `${window.location.origin}${permalink}`;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Το permalink αντιγράφηκε στο clipboard!');
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sector').value = '';
+            document.getElementById('company').value = '';
+            document.getElementById('searchSuggestions').style.display = 'none';
+            document.getElementById('urlDisplay').style.display = 'none';
+            
+            // Reset company dropdown
+            const companySelect = document.getElementById('company');
+            companySelect.innerHTML = '<option value="">-- Όλες οι Εταιρείες --</option>';
+            
+            showAllResults();
+            window.history.pushState({}, '', '/');
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', function() {
+            performSearch(this.value);
+        });
+
+        document.getElementById('searchInput').addEventListener('blur', function() {
+            // Delay hiding suggestions to allow clicking
+            setTimeout(() => {
+                document.getElementById('searchSuggestions').style.display = 'none';
+            }, 200);
+        });
+
+        document.getElementById('sector').addEventListener('change', function() {
+            const sector = this.value;
+            const companySelect = document.getElementById('company');
+            
+            // Update company dropdown
+            companySelect.innerHTML = '<option value="">-- Όλες οι Εταιρείες --</option>';
+            
+            if (sector && companyGroups[sector]) {
+                companyGroups[sector].forEach(company => {
+                    const option = document.createElement('option');
+                    option.value = company;
+                    option.textContent = company;
+                    companySelect.appendChild(option);
+                });
+            }
+            
+            filterResults();
+        });
+
+        document.getElementById('company').addEventListener('change', filterResults);
+
+        function filterResults() {
+            const sector = document.getElementById('sector').value;
+            const company = document.getElementById('company').value;
+            
+            let filtered = unionData;
+            
+            if (sector) {
+                filtered = filtered.filter(union => union.sector === sector);
+            }
+            
+            if (company) {
+                filtered = filtered.filter(union => union.company === company);
+            }
+            
+            showFilteredResults(filtered);
+        }
+
+        // Initialize
+        showAllResults();
+    </script>
+</body>
+</html>
