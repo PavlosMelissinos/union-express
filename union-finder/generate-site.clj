@@ -26,8 +26,11 @@
   (str "/somateio-" (normalize-string name) "/"))
 
 (defn generate-id [name]
-  "Generate ID from union name"
-  (normalize-string name))
+  "Generate unique ID from union name"
+  (let [normalized (normalize-string name)]
+    (if (str/blank? normalized)
+      (str "union-" (rand-int 10000))
+      normalized)))
 
 (defn parse-phones [phone-str]
   "Parse comma-separated phone numbers"
@@ -86,28 +89,43 @@
                            :else "Άλλοι")}))
        raw-data))
 
+(defn clj-to-json [data]
+  "Convert Clojure data to JSON string"
+  (cond
+    (nil? data) "null"
+    (string? data) (str "\"" (str/escape data {\" "\\\"", \\ "\\\\"}) "\"")
+    (number? data) (str data)
+    (boolean? data) (if data "true" "false")
+    (keyword? data) (str "\"" (name data) "\"")
+    (sequential? data) (str "[" (str/join "," (map clj-to-json data)) "]")
+    (map? data) (str "{"
+                     (str/join ","
+                               (map (fn [[k v]]
+                                      (str (clj-to-json (name k)) ":" (clj-to-json v)))
+                                    data))
+                     "}")
+    :else (str "\"" (str data) "\"")))
+
 (defn generate-js-data [unions]
   "Generate JavaScript data array"
-  (str "const unionData = "
-       (pr-str
-         (mapv (fn [union]
-                 {:id (:id union)
-                  :name (:name union)
-                  :shortName (:short-name union)
-                  :type (:type union)
-                  :sector (:sector union)
-                  :sectorName (:sector-name union)
-                  :parentUnion (:parent-union union)
-                  :website (:website union)
-                  :description (:description union)
-                  :registrationForm (:registration-form union)
-                  :phones (:phones union)
-                  :email (:email union)
-                  :instagram (:instagram union)
-                  :otherContact (:other-contact union)
-                  :permalink (:permalink union)})
-               unions))
-       ";"))
+  (let [js-unions (mapv (fn [union]
+                          {"id" (:id union)
+                           "name" (:name union)
+                           "shortName" (:short-name union)
+                           "type" (:type union)
+                           "sector" (:sector union)
+                           "sectorName" (:sector-name union)
+                           "parentUnion" (:parent-union union)
+                           "website" (:website union)
+                           "description" (:description union)
+                           "registrationForm" (:registration-form union)
+                           "phones" (vec (:phones union))
+                           "email" (:email union)
+                           "instagram" (:instagram union)
+                           "otherContact" (:other-contact union)
+                           "permalink" (:permalink union)})
+                        unions)]
+    (str "const unionData = " (clj-to-json js-unions) ";")))
 
 (def html-template
   "<!DOCTYPE html>
