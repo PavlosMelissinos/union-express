@@ -32,10 +32,17 @@
       (str "union-" (hash name))  ; Use hash instead of random
       normalized)))
 
+(defn parse-phone [phone-str]
+  "Parse phone number"
+  (when-not (str/blank? phone-str)
+    (let [trimmed (str/trim phone-str)
+          prefix (if (str/starts-with? trimmed "30") "+" "+30")]
+      (str prefix trimmed))))
+
 (defn parse-phones [phone-str]
   "Parse comma-separated phone numbers"
   (when-not (str/blank? phone-str)
-    (map str/trim (str/split phone-str #","))))
+    (map #(str "+" (str/trim %)) (str/split phone-str #","))))
 
 (defn clean-url [url]
   "Clean and validate URL"
