@@ -21,6 +21,20 @@
         (str/replace #"\s+" "-")
         str/trim)))
 
+(defn normalize-string-gr [s]
+  "Normalize string for URL/ID generation"
+  (when s
+    (-> s
+        str/lower-case
+        (str/replace #"[ά]" "α")
+        (str/replace #"[έ]" "ε")
+        (str/replace #"[ή]" "η")
+        (str/replace #"[ί]" "ι")
+        (str/replace #"[ό]" "ο")
+        (str/replace #"[ύ]" "υ")
+        (str/replace #"[ώ]" "ω")
+        str/trim)))
+
 (defn generate-permalink [name]
   "Generate permalink from union name"
   (str "/somateio-" (normalize-string name) "/"))
@@ -42,7 +56,7 @@
 (defn parse-phones [phone-str]
   "Parse comma-separated phone numbers"
   (when-not (str/blank? phone-str)
-    (map #(str "+" (str/trim %)) (str/split phone-str #","))))
+    (map parse-phone (str/split phone-str #","))))
 
 (defn clean-url [url]
   "Clean and validate URL"
@@ -52,49 +66,69 @@
                 (str/starts-with? cleaned "www."))
         cleaned))))
 
-(defn process-union-data [raw-data]
+(defn process-union-entry [row]
   "Process raw CSV data into structured union data"
-  (map (fn [row]
-         (let [short-name (get row "Όνομα σωματείου")
-               full-name (get row "Πλήρες όνομα")
-               union-type (get row "Τύπος σωματείου")
-               parent-union (get row "Κλαδικό σωματείο")
-               website (clean-url (get row "Ιστοσελίδα σωματείου"))
-               description (get row "Περιγραφή")
-               registration-form (clean-url (get row "Φόρμα εγγραφής"))
-               phones (parse-phones (get row "Τηλέφωνα"))
-               email (get row "Εmail")
-               instagram (clean-url (get row "Instagram"))
-               other-contact (get row "Άλλοι τρόποι επικοινωνίας")]
-           {:id (generate-id short-name)
-            :short-name short-name
-            :full-name full-name
-            :name (if (str/blank? full-name) short-name full-name)
-            :type union-type
-            :parent-union (when-not (str/blank? parent-union) parent-union)
-            :website website
-            :description (when-not (str/blank? description) description)
-            :registration-form registration-form
-            :phones phones
-            :email (when-not (str/blank? email) email)
-            :instagram instagram
-            :other-contact (when-not (str/blank? other-contact) other-contact)
-            :permalink (generate-permalink short-name)
-            :sector (cond
-                      (re-find #"(?i)(νοσοκομ|ιατρ|υγε)" full-name) "healthcare"
-                      (re-find #"(?i)(εκπαιδ|διδασκ|φροντιστ)" full-name) "education"
-                      (re-find #"(?i)(λογιστ)" full-name) "accounting"
-                      (re-find #"(?i)(ερευν)" full-name) "research"
-                      (re-find #"(?i)(συνδικ)" full-name) "unions"
-                      :else "other")
-            :sector-name (cond
-                           (re-find #"(?i)(νοσοκομ|ιατρ|υγε)" full-name) "Υγεία"
-                           (re-find #"(?i)(εκπαιδ|διδασκ|φροντιστ)" full-name) "Εκπαίδευση"
-                           (re-find #"(?i)(λογιστ)" full-name) "Λογιστικά"
-                           (re-find #"(?i)(ερευν)" full-name) "Έρευνα"
-                           (re-find #"(?i)(συνδικ)" full-name) "Συνδικαλιστικά"
-                           :else "Άλλοι")}))
-       raw-data))
+  (let [short-name        (get row "Όνομα σωματείου")
+        full-name         (get row "Πλήρες όνομα")
+        union-type        (get row "Τύπος σωματείου")
+        parent-union      (get row "Κλαδικό σωματείο")
+        website           (clean-url (get row "Ιστοσελίδα σωματείου"))
+        description       (get row "Περιγραφή")
+        registration-form (clean-url (get row "Φόρμα εγγραφής"))
+        phones            (parse-phones (get row "Τηλέφωνα"))
+        email             (get row "Εmail")
+        instagram         (clean-url (get row "Instagram"))
+        other-contact     (get row "Άλλοι τρόποι επικοινωνίας")
+        sector            (let [low (-> full-name normalize-string-gr str/lower-case)]
+                            (cond
+                              (re-find #"(νοσοκομ|ιατρ|υγε)" low) "healthcare"
+                              (re-find #"(εκπαιδ|διδασκ|φροντιστ)" low) "education"
+                              (re-find #"(λογιστ)" low) "accounting"
+                              (re-find #"(ερευν|επιστημ)" low) "research"
+                              (re-find #"(τουριστ|επισιτ|εστιατ)" low) "tourism"
+                              (re-find #"(οικοδομ|κατασκευ|τεχνικ)" low) "construction"
+                              (re-find #"(τηλεπικοινων|πληροφορικ|τεχνολογ)" low) "tech"
+                              (re-find #"(εμπορ|πωλ)" low) "commerce"
+                              (re-find #"(μεταλλ|χημικ|βιομηχαν)" low) "industry"
+                              (re-find #"(τροφιμ|γαλακτ|ποτ)" low) "food"
+                              (re-find #"(συγκοινων|οδηγ|μεταφορ)" low) "transport"
+                              (re-find #"(διοικητικ|γραμματε)" low) "administration"
+                              (re-find #"(δημοσι|δημοτικ)" low) "public"
+                              (re-find #"(συνδικ|εργατ|εργαζ)" low) "labor"
+                              (re-find #"(γυναικ)" low) "social"
+                              :else "other"))
+        sector-gr        (get {"healthcare" "Υγεία"
+                               "education" "Εκπαίδευση"
+                               "accounting" "Λογιστικά"
+                               "research" "Έρευνα"
+                               "tourism" "Τουρισμός"
+                               "construction" "Κατασκευές"
+                               "tech" "ΤΠΕ (Τηλεπικοινωνίες - Πληροφορική - Έρευνα)"
+                               "commerce" "Εμπόριο"
+                               "industry" "Βιομηχανία"
+                               "food" "Τρόφιμα"
+                               "transport" "Μεταφορές"
+                               "administration" "Διοίκηση"
+                               "public" "Δημόσιος Τομέας"
+                               "labor" "Εργασιακά"
+                               "social" "Κοινωνικά"
+                               "other" "Άλλοι"} sector)]
+    {:id (generate-id short-name)
+     :short-name short-name
+     :full-name full-name
+     :name (if (str/blank? full-name) short-name full-name)
+     :type union-type
+     :parent-union (when-not (str/blank? parent-union) parent-union)
+     :website website
+     :description (when-not (str/blank? description) description)
+     :registration-form registration-form
+     :phones phones
+     :email (when-not (str/blank? email) email)
+     :instagram instagram
+     :other-contact (when-not (str/blank? other-contact) other-contact)
+     :permalink (generate-permalink short-name)
+     :sector sector
+     :sector-name sector-gr}))
 
 (defn clj-to-json [data]
   "Convert Clojure data to JSON string"
@@ -789,7 +823,7 @@
     (try
       (let [csv-data (read-csv-file csv-file)
             raw-unions (csv-to-maps csv-data)
-            processed-unions (process-union-data raw-unions)
+            processed-unions (map process-union-entry raw-unions)
             html-content (generate-html processed-unions)]
 
         (println (str "✅ Processed " (count processed-unions) " unions"))
