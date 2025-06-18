@@ -29,7 +29,7 @@
   "Generate unique ID from union name"
   (let [normalized (normalize-string name)]
     (if (str/blank? normalized)
-      (str "union-" (rand-int 10000))
+      (str "union-" (hash name))  ; Use hash instead of random
       normalized)))
 
 (defn parse-phones [phone-str]
@@ -333,6 +333,12 @@
             font-size: 1.8rem;
             margin-bottom: 15px;
             padding-right: 100px;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .union-card h3:hover {
+            opacity: 0.8;
         }
 
         .type-badge {
@@ -416,6 +422,11 @@
             transform: translateY(-2px);
         }
 
+        .header a:hover h1 {
+            opacity: 0.8;
+            transform: scale(1.02);
+        }
+
         .no-results {
             text-align: center;
             color: #666;
@@ -467,8 +478,10 @@
 <body>
     <div class=\"container\">
         <div class=\"header\">
-            <h1>🏛️ Κατάλογος Σωματείων</h1>
-            <p>Βρείτε σωματεία και ενώσεις στη Θεσσαλονίκη</p>
+            <a href=\"#\" onclick=\"resetToHome(); return false;\" style=\"text-decoration: none; color: inherit;\">
+                <h1>🏛️ Κατάλογος Σωματείων</h1>
+            </a>
+            <p>Βρες το εργατικό σωματείο που σου αντιστοιχεί! (Θεσσαλονίκη)</p>
         </div>
 
         <div class=\"search-section\">
@@ -561,10 +574,10 @@
         function createUnionCard(union) {
             return `
                 <div class=\"union-card\">
-                    <div class=\"permalink-badge\" onclick=\"copyPermalink('${union.permalink}')\" title=\"Αντιγραφή permalink\">
+                    <div class=\"permalink-badge\" onclick=\"copyPermalink('${union.id}')\" title=\"Αντιγραφή permalink\">
                         🔗 Link
                     </div>
-                    <h3>${union.name}</h3>
+                    <h3 onclick=\"focusUnion('${union.id}')\">${union.name}</h3>
                     <div class=\"type-badge\">${union.type} Σωματείο</div>
 
                     ${union.parentUnion ? `
@@ -643,13 +656,8 @@
         }
 
         function selectUnion(unionId) {
-            const union = unionData.find(u => u.id === unionId);
-            if (union) {
-                showResults([union]);
-                updateUrl(union.permalink);
-                document.getElementById('searchSuggestions').style.display = 'none';
-                document.getElementById('searchInput').value = union.name;
-            }
+            focusUnion(unionId);
+            document.getElementById('searchSuggestions').style.display = 'none';
         }
 
         function performSearch() {
@@ -677,21 +685,37 @@
             showResults(results);
         }
 
-        function updateUrl(permalink) {
-            const urlDisplay = document.getElementById('urlDisplay');
-            const currentUrl = document.getElementById('currentUrl');
-
-            currentUrl.textContent = `${window.location.origin}${permalink}`;
-            urlDisplay.style.display = 'block';
-
-            window.history.pushState({}, '', permalink);
+        function focusUnion(unionId) {
+            const union = unionData.find(u => u.id === unionId);
+            if (union) {
+                showResults([union]);
+                window.location.hash = unionId;
+                document.getElementById('searchInput').value = union.name;
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
-        function copyPermalink(permalink) {
-            const url = `${window.location.origin}${permalink}`;
+        function copyPermalink(unionId) {
+            const url = `${window.location.origin}${window.location.pathname}#${unionId}`;
             navigator.clipboard.writeText(url).then(() => {
-                alert('Το permalink αντιγράφηκε στο clipboard!');
+                // Visual feedback - change icon temporarily
+                const badge = event.target;
+                const originalText = badge.textContent;
+                badge.textContent = '✅ Copied';
+                setTimeout(() => {
+                    badge.textContent = originalText;
+                }, 2000);
             });
+        }
+
+        function checkHashOnLoad() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                const union = unionData.find(u => u.id === hash);
+                if (union) {
+                    focusUnion(hash);
+                }
+            }
         }
 
         function clearFilters() {
@@ -699,10 +723,14 @@
             document.getElementById('sector').value = '';
             document.getElementById('type').value = '';
             document.getElementById('searchSuggestions').style.display = 'none';
-            document.getElementById('urlDisplay').style.display = 'none';
 
             showResults(unionData);
-            window.history.pushState({}, '', '/');
+            window.location.hash = '';
+        }
+
+        function resetToHome() {
+            clearFilters();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // Event listeners
@@ -718,7 +746,10 @@
 
         // Initialize
         populateFilters();
-        showResults(unionData);
+        checkHashOnLoad();
+        if (!window.location.hash) {
+            showResults(unionData);
+        }
     </script>
 </body>
 </html>")
