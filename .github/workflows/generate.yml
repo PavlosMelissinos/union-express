@@ -54,6 +54,7 @@ jobs:
 
     - name: Generate site
       run: |
+        cd union-finder
         bb generate_site.clj credentials.json "${{ secrets.SPREADSHEET_ID }}" "Κατάλογος" index.html
 
     - name: Setup Pages
