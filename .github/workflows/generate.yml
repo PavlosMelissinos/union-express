@@ -37,6 +37,7 @@ jobs:
 
     - name: Create credentials file
       run: |
+        cd union-finder
         cat > credentials.json << EOF
         {
           "type": "service_account",
