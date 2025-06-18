@@ -31,8 +31,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup Babashka
-      uses: babashka/babashka-action@v0.1.3
+    - name: Setup Babashka  
+      run: |
+        bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
 
     - name: Create credentials file
       run: |
